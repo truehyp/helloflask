@@ -129,9 +129,8 @@ def upload():
 def multi_upload():
     form = MultiUploadForm()
 
-    if request.method == 'POST':
+    if form.validate_on_submit():
         filenames = []
-
         # check csrf token
         try:
             validate_csrf(form.csrf_token.data)
@@ -139,29 +138,22 @@ def multi_upload():
             flash('CSRF token error.')
             return redirect(url_for('multi_upload'))
 
-        photos = request.files.getlist('photo')
-        # check if user has selected files. If not, the browser
-        # will submit an empty file part without filename
+        photos=form.photo.data
         if not photos[0].filename:
-            flash('No selected file.')
+            flash('No selected fle.')
             return redirect(url_for('multi_upload'))
-
         for f in photos:
-            # check the file extension
             if f and allowed_file(f.filename):
                 filename = random_filename(f.filename)
-                f.save(os.path.join(
-                    app.config['UPLOAD_PATH'], filename
-                ))
+                f.save(os.path.join(app.config['UPLOAD_PATH'], filename))
                 filenames.append(filename)
             else:
                 flash('Invalid file type.')
                 return redirect(url_for('multi_upload'))
-        flash('Upload success.')
+        flash('Upload success')
         session['filenames'] = filenames
         return redirect(url_for('show_images'))
     return render_template('upload.html', form=form)
-
 
 @app.route('/dropzone-upload', methods=['GET', 'POST'])
 def dropzone_upload():
